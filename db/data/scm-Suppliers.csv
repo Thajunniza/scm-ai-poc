@@ -1,0 +1,11 @@
+ID,name,country,category,riskScore,onTimeDelivery,qualityScore,status,since
+S001,TechParts Global,Germany,Electronics,15,97.5,98.2,Active,2018-01-15
+S002,FastLogix Inc,USA,Logistics,25,92.1,94.5,Active,2019-03-10
+S003,EcoRaw Materials,Brazil,Raw Materials,45,85.3,88.7,Active,2020-06-01
+S004,AsiaComp Ltd,China,Electronics,62,78.4,82.1,Probation,2021-02-20
+S005,NordSupply AB,Sweden,Packaging,18,96.8,97.4,Active,2017-11-05
+S006,MidEast Textiles,UAE,Textiles,38,88.9,91.3,Active,2019-08-14
+S007,QuickParts USA,USA,Electronics,20,94.2,95.8,Active,2020-01-30
+S008,GlobalChem Co,India,Chemicals,55,81.7,84.9,Probation,2021-09-12
+S009,PrecisionMech GmbH,Germany,Machinery,12,98.1,99.0,Active,2016-05-20
+S010,CargoKing Ltd,Netherlands,Logistics,30,91.5,93.2,Active,2018-07-08

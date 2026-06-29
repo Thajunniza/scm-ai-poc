@@ -1,0 +1,11 @@
+ID,sku,name,category,stockLevel,reorderPoint,maxStock,unitCost,supplier_ID,warehouse,lastUpdated
+P001,EL-CPU-001,Intel Core i9 Processor,Electronics,45,50,500,320.00,S001,WH-Berlin,2026-06-25
+P002,EL-RAM-002,32GB DDR5 RAM Module,Electronics,120,100,1000,85.00,S001,WH-Berlin,2026-06-25
+P003,EL-SSD-003,1TB NVMe SSD,Electronics,30,80,800,65.00,S004,WH-Shanghai,2026-06-24
+P004,RM-STL-001,Steel Rods Grade A,Raw Materials,2500,1000,10000,2.50,S003,WH-SaoPaulo,2026-06-25
+P005,PK-BOX-001,Heavy Duty Shipping Box L,Packaging,850,500,5000,1.20,S005,WH-Stockholm,2026-06-23
+P006,EL-PCB-004,Printed Circuit Board v3,Electronics,18,50,300,45.00,S007,WH-Chicago,2026-06-25
+P007,CH-SOL-001,Industrial Solvent Batch,Chemicals,95,100,500,12.00,S008,WH-Mumbai,2026-06-22
+P008,MC-BRG-001,Precision Bearing Set,Machinery,200,150,1000,28.00,S009,WH-Munich,2026-06-25
+P009,EL-CAB-005,HDMI 2.1 Cable Bundle,Electronics,560,200,2000,8.50,S007,WH-Chicago,2026-06-24
+P010,TX-FAB-001,Industrial Fabric Roll,Textiles,75,100,500,35.00,S006,WH-Dubai,2026-06-23

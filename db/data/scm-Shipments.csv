@@ -1,0 +1,8 @@
+ID,trackingNumber,po_ID,carrier,origin,destination,shipDate,estimatedArrival,actualArrival,status,lastLocation,delayReason
+SH001,DHL-2026-88421,PO001,DHL,Berlin Germany,Chicago USA,2026-05-02,2026-05-14,2026-05-14,Delivered,Chicago USA,
+SH002,FDX-2026-55219,PO002,FedEx,Sao Paulo Brazil,Munich Germany,2026-05-12,2026-05-25,,Delayed,Customs Miami USA,Customs clearance delay due to documentation issue
+SH003,UPS-2026-33401,PO003,UPS,Shanghai China,Amsterdam Netherlands,2026-05-16,2026-06-01,2026-06-05,Delivered,Amsterdam Netherlands,Minor port congestion delay
+SH004,DHL-2026-91002,PO004,DHL,Chicago USA,Berlin Germany,2026-05-22,2026-06-10,,InTransit,Frankfurt Germany,
+SH005,MSC-2026-44201,PO006,MSC Cargo,Stockholm Sweden,Hamburg Germany,2026-06-06,2026-06-18,,InTransit,Hamburg Germany,
+SH006,FDX-2026-77831,PO009,FedEx,Shanghai China,Rotterdam Netherlands,2026-06-03,2026-06-20,,Delayed,Singapore Port,Port congestion in Singapore causing 5-day delay
+SH007,DHL-2026-99123,PO010,DHL,Amsterdam Netherlands,London UK,2026-06-21,2026-07-10,,InTransit,Brussels Belgium,
