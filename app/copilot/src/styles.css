@@ -1,0 +1,77 @@
+/* ── Design tokens — Joule-inspired light theme ──────────────────────────── */
+:root {
+  --bg:           #F5F6F8;
+  --surface:      #FFFFFF;
+  --surface-soft: #F0F1F5;
+  --border:       #E2E4EA;
+  --border-soft:  #ECEDF2;
+
+  --text-hi:  #1A1A2E;
+  --text-mid: #5A5D72;
+  --text-low: #9396A8;
+
+  --grad-start: #5B7FFF;
+  --grad-mid:   #8B5CF6;
+  --grad-end:   #C084FC;
+
+  --success: #2DBE8C;
+  --success-bg: #E3F8F0;
+  --warning: #F2A65A;
+  --warning-bg: #FDF1E3;
+  --danger:  #E0654F;
+  --danger-bg: #FBEAE7;
+
+  --gradient: linear-gradient(135deg, var(--grad-start), var(--grad-mid) 55%, var(--grad-end));
+
+  --font-display: 'Manrope', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  --shadow-sm: 0 1px 2px rgba(26, 26, 46, 0.04), 0 1px 3px rgba(26, 26, 46, 0.06);
+  --shadow-md: 0 4px 12px rgba(26, 26, 46, 0.06), 0 2px 4px rgba(26, 26, 46, 0.04);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-hi);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, textarea { font-family: inherit; }
+
+::selection { background: var(--grad-end); color: #fff; }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: #C7CAD4; }
+
+:focus-visible {
+  outline: 2px solid var(--grad-mid);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -33,6 +33,16 @@ const AGENT_REGISTRY = {
 
 module.exports = class SCMChatService extends cds.ApplicationService {
     async init() {
+        // ── Allow the React dev UI (different port) to call this API ───────────
+        this.before('*', (req) => {
+            const res = req.res
+            if (res) {
+                res.set('Access-Control-Allow-Origin', 'http://localhost:5173')
+                res.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+                res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+                res.set('Access-Control-Allow-Credentials', 'true')
+            }
+        })
 
         // ── Main chat action ──────────────────────────────────────────────────
         this.on('chat', async (req) => {

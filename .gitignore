@@ -74,3 +74,6 @@ Thumbs.db
 # ── Logs ──────────────────────────────────────────────────────────────────────
 *.log
 logs/
+
+app/copilot/node_modules/
+app/copilot/dist/
