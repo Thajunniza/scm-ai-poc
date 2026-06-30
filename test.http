@@ -1,0 +1,367 @@
+###############################################################################
+# SCM AI POC — Test Scenarios
+# ─────────────────────────────────────────────────────────────────────────────
+# Requires: VS Code "REST Client" extension (humao.rest-client)
+# Usage:    Click "Send Request" above any ### block, or use Ctrl+Alt+R
+# Server:   cds watch  (default http://localhost:4004)
+###############################################################################
+
+@baseUrl = http://localhost:4004
+@adminUser = admin
+@adminPass = admin
+@analystUser = analyst
+@analystPass = analyst
+@viewerUser = viewer
+@viewerPass = viewer
+
+
+###############################################################################
+# SECTION 1 — AUTH / ROLE CHECKS
+###############################################################################
+
+### 1.1 Admin can view Suppliers (SCMAdmin has all roles)
+GET {{baseUrl}}/scm-chat/Suppliers
+Authorization: Basic {{adminUser}}:{{adminPass}}
+
+
+### 1.2 Analyst can view Suppliers (SCMAnalyst includes SCMViewer)
+GET {{baseUrl}}/scm-chat/Suppliers
+Authorization: Basic {{analystUser}}:{{analystPass}}
+
+
+### 1.3 Viewer can view Suppliers (SCMViewer only)
+GET {{baseUrl}}/scm-chat/Suppliers
+Authorization: Basic {{viewerUser}}:{{viewerPass}}
+
+
+### 1.4 Viewer CANNOT call askInventory — expect 403 Forbidden
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{viewerUser}}:{{viewerPass}}
+Content-Type: application/json
+
+{
+  "message": "What is low on stock?"
+}
+
+
+### 1.5 No auth header — expect 401 Unauthorized
+GET {{baseUrl}}/scm-chat/Suppliers
+
+
+###############################################################################
+# SECTION 2 — DATA ENTITIES (Viewer+)
+###############################################################################
+
+### 2.1 Get all Suppliers
+GET {{baseUrl}}/scm-chat/Suppliers
+Authorization: Basic {{viewerUser}}:{{viewerPass}}
+
+
+### 2.2 Get all Products
+GET {{baseUrl}}/scm-chat/Products
+Authorization: Basic {{viewerUser}}:{{viewerPass}}
+
+
+### 2.3 Get all Purchase Orders
+GET {{baseUrl}}/scm-chat/PurchaseOrders
+Authorization: Basic {{viewerUser}}:{{viewerPass}}
+
+
+### 2.4 Get all Shipments
+GET {{baseUrl}}/scm-chat/Shipments
+Authorization: Basic {{viewerUser}}:{{viewerPass}}
+
+
+###############################################################################
+# SECTION 3 — INVENTORY AGENT (Analyst+)
+###############################################################################
+
+### 3.1 Inventory — critically low stock
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "What products are critically low on stock?"
+}
+
+
+### 3.2 Inventory — total value
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "What is the total inventory value?"
+}
+
+
+### 3.3 Inventory — specific warehouse
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "What products are stored in WH-Berlin?"
+}
+
+
+### 3.4 Inventory — reorder recommendations
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Which products need to be reordered soon?"
+}
+
+
+###############################################################################
+# SECTION 4 — DELIVERY AGENT (Analyst+)
+###############################################################################
+
+### 4.1 Delivery — delayed shipments
+POST {{baseUrl}}/scm-chat/askDelivery
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Are there any delayed shipments?"
+}
+
+
+### 4.2 Delivery — in transit
+POST {{baseUrl}}/scm-chat/askDelivery
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "What shipments are currently in transit?"
+}
+
+
+### 4.3 Delivery — delivered shipments
+POST {{baseUrl}}/scm-chat/askDelivery
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Which shipments have already been delivered?"
+}
+
+
+### 4.4 Delivery — on-time performance
+POST {{baseUrl}}/scm-chat/askDelivery
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "What is our on-time delivery rate?"
+}
+
+
+###############################################################################
+# SECTION 5 — SUPPLIER RISK AGENT (Analyst+)
+###############################################################################
+
+### 5.1 Supplier — high risk suppliers
+POST {{baseUrl}}/scm-chat/askSupplierRisk
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Which suppliers are high risk?"
+}
+
+
+### 5.2 Supplier — most reliable
+POST {{baseUrl}}/scm-chat/askSupplierRisk
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Who are our most reliable suppliers?"
+}
+
+
+### 5.3 Supplier — probation suppliers
+POST {{baseUrl}}/scm-chat/askSupplierRisk
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Which suppliers are currently on probation?"
+}
+
+
+### 5.4 Supplier — portfolio overview
+POST {{baseUrl}}/scm-chat/askSupplierRisk
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Give me an overview of our supplier risk portfolio."
+}
+
+
+###############################################################################
+# SECTION 6 — CHAT ROUTER (Analyst+) — auto intent detection
+###############################################################################
+
+### 6.1 Router — should detect Inventory intent
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "What is the total inventory value?",
+  "agentHint": ""
+}
+
+
+### 6.2 Router — should detect Delivery intent
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Are there any delayed shipments?",
+  "agentHint": ""
+}
+
+
+### 6.3 Router — should detect Supplier intent
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Which suppliers are high risk?",
+  "agentHint": ""
+}
+
+
+### 6.4 Router — explicit agentHint overrides keyword detection
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Tell me something",
+  "agentHint": "inventory"
+}
+
+
+### 6.5 Router — unknown intent returns clarification message
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "hello how are you",
+  "agentHint": ""
+}
+
+
+###############################################################################
+# SECTION 7 — VALIDATION / ERROR CASES
+###############################################################################
+
+### 7.1 Empty message — expect validation error
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": ""
+}
+
+
+### 7.2 Missing message field entirely — expect validation error
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+}
+
+
+### 7.3 Message too long (>1000 chars) — expect validation error
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels. Tell me about stock levels."
+}
+
+
+### 7.4 Invalid agentHint value — expect validation error
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "test",
+  "agentHint": "not-a-real-agent"
+}
+
+
+### 7.5 Message as wrong type (number instead of string) — expect validation error
+POST {{baseUrl}}/scm-chat/askInventory
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": 12345
+}
+
+
+###############################################################################
+# SECTION 8 — GENAI BRIDGE HEALTH CHECK
+###############################################################################
+
+### 8.1 Check GenAI bridge connectivity (real SAP GenAI Hub ping)
+POST {{baseUrl}}/scm-chat/checkGenAiHealth
+Authorization: Basic {{viewerUser}}:{{viewerPass}}
+Content-Type: application/json
+
+{}
+
+
+###############################################################################
+# SECTION 9 — FOLLOW-UP / CONVERSATION-STYLE SEQUENCE
+# Run these in order to simulate a real user session
+###############################################################################
+
+### 9.1 Start — ask about inventory
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "What products are critically low on stock?",
+  "agentHint": ""
+}
+
+
+### 9.2 Follow up — ask about the supplier for one of those low-stock items
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Is AsiaComp Ltd a reliable supplier?",
+  "agentHint": ""
+}
+
+
+### 9.3 Follow up — ask about delivery status related to that supplier's shipments
+POST {{baseUrl}}/scm-chat/chat
+Authorization: Basic {{analystUser}}:{{analystPass}}
+Content-Type: application/json
+
+{
+  "message": "Are there any delays affecting shipments from AsiaComp?",
+  "agentHint": ""
+}

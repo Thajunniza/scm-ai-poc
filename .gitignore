@@ -36,3 +36,41 @@ mta_archives/
 .vscode
 
 .env
+# ── Node.js ───────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+.npm/
+
+# ── CAP / SQLite ──────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+gen/
+_out/
+.cds-services.json
+
+# ── Python (genai-bridge) ────────────────────────────────────────────────────
+genai-bridge/venv/
+genai-bridge/__pycache__/
+genai-bridge/*.pyc
+genai-bridge/.env
+genai-bridge/last_payload.json
+genai-bridge/test_large_prompt.py
+genai-bridge/test_medium_prompt.py
+
+# ── Environment / secrets ────────────────────────────────────────────────────
+.env
+.env.local
+*.env
+
+# ── Test coverage ─────────────────────────────────────────────────────────────
+coverage/
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/

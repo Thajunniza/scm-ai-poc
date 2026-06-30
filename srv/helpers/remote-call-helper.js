@@ -3,38 +3,28 @@
 /**
  * remote-call-helper.js
  * ──────────────────────
- * Calls the GenAI Hub via a Python bridge script (genai-bridge/call_llm.py),
- * which uses litellm.completion(model="sap/gpt-4o") — proven working.
+ * Calls SAP GenAI Hub via the Python bridge (genai-bridge/call_llm.py),
+ * using file-based I/O instead of stdin/stdout piping — simpler,
+ * easier to debug, no buffering/encoding edge cases.
  *
- * Why a Python subprocess instead of direct Node.js HTTP:
- *   - litellm's SAP provider handles the full orchestration request shape
- *     (auth, streaming flags, module config) that we could not reliably
- *     replicate by hand in Node.js (confirmed via 404s on hand-rolled calls)
- *   - This keeps the CAP layer simple — agents don't need to know
- *     Python is involved at all
- *
- * Folder layout assumed (sibling of srv/):
- *   scm-ai-poc/
- *     ├── srv/helpers/remote-call-helper.js   <- this file
- *     └── genai-bridge/call_llm.py            <- the Python bridge
+ * Flow:
+ *   1. Write the messages array to a temp input file
+ *   2. Run: python call_llm.py input.json output.json
+ *   3. Read the result from the output file
  */
 
-const { spawn } = require('child_process')
-const path       = require('path')
-const { AICallError }  = require('../utils/errors')
+const { execFileSync } = require('child_process')
+const fs   = require('fs')
+const path = require('path')
+const os   = require('os')
 const { createLogger } = require('../utils/logger')
 
 const logger = createLogger('RemoteCallHelper')
 
-// srv/helpers -> srv -> root -> genai-bridge
-const BRIDGE_DIR      = path.join(__dirname, '..', '..', 'genai-bridge')
-const BRIDGE_SCRIPT   = path.join(BRIDGE_DIR, 'call_llm.py')
-
-// Prefer the venv's python directly — avoids PATH issues where
-// 'python' on PATH might not be the venv with litellm installed
-const PYTHON_BIN = process.env.GENAI_BRIDGE_PYTHON
+const BRIDGE_DIR    = path.join(__dirname, '..', '..', 'genai-bridge')
+const BRIDGE_SCRIPT = path.join(BRIDGE_DIR, 'call_llm.py')
+const PYTHON_BIN    = process.env.GENAI_BRIDGE_PYTHON
     || path.join(BRIDGE_DIR, 'venv', 'Scripts', 'python.exe')
-
 const CALL_TIMEOUT_MS = parseInt(process.env.GENAI_BRIDGE_TIMEOUT || '60000')
 
 /**
@@ -51,21 +41,27 @@ async function callAgent({ agentName, prompt, req }) {
 
     logger.info('Calling GenAI bridge', { agentName, userId, messageCount: prompt?.length })
 
+    const callId      = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const inputPath    = path.join(os.tmpdir(), `genai-input-${callId}.json`)
+    const outputPath   = path.join(os.tmpdir(), `genai-output-${callId}.json`)
+
     try {
-        const result = await spawnBridge({ messages: prompt })
+        fs.writeFileSync(inputPath, JSON.stringify({ messages: prompt }), 'utf-8')
+
+        execFileSync(
+            PYTHON_BIN,
+            [BRIDGE_SCRIPT, inputPath, outputPath],
+            { cwd: BRIDGE_DIR, timeout: CALL_TIMEOUT_MS }
+        )
+
+        const result = JSON.parse(fs.readFileSync(outputPath, 'utf-8'))
 
         if (!result.success) {
             logger.warn('GenAI bridge reported failure — falling back to simulation', {
                 agentName,
                 bridgeError: result.error
             })
-            return {
-                reply:        null,
-                model:        'simulation',
-                inputTokens:  0,
-                outputTokens: 0,
-                simulated:    true
-            }
+            return { reply: null, model: 'simulation', inputTokens: 0, outputTokens: 0, simulated: true }
         }
 
         logger.info('GenAI bridge call successful', {
@@ -83,96 +79,14 @@ async function callAgent({ agentName, prompt, req }) {
         }
 
     } catch (err) {
-        logger.error('GenAI bridge spawn failed — falling back to simulation', err, { agentName })
+        logger.error('GenAI bridge call failed — falling back to simulation', err, { agentName })
+        return { reply: null, model: 'simulation', inputTokens: 0, outputTokens: 0, simulated: true }
 
-        return {
-            reply:        null,
-            model:        'simulation',
-            inputTokens:  0,
-            outputTokens: 0,
-            simulated:    true
-        }
+    } finally {
+        // Clean up temp files regardless of outcome
+        try { fs.unlinkSync(inputPath) } catch {}
+        try { fs.unlinkSync(outputPath) } catch {}
     }
-}
-
-/**
- * Spawn the Python bridge script, pipe messages in via stdin,
- * read JSON result from stdout.
- *
- * @param {object} params
- * @param {Array}  params.messages - OpenAI-format messages array
- * @returns {Promise<object>} parsed JSON result from call_llm.py
- */
-function spawnBridge({ messages }) {
-    return new Promise((resolve, reject) => {
-        const child = spawn(PYTHON_BIN, [BRIDGE_SCRIPT], {
-            cwd: BRIDGE_DIR,
-            shell: false
-        })
-
-        let stdout = ''
-        let stderr = ''
-        let settled = false
-
-        const timeout = setTimeout(() => {
-            if (!settled) {
-                settled = true
-                child.kill()
-                reject(new Error(`GenAI bridge timed out after ${CALL_TIMEOUT_MS}ms`))
-            }
-        }, CALL_TIMEOUT_MS)
-
-        child.stdout.on('data', (data) => { stdout += data.toString() })
-        child.stderr.on('data', (data) => { stderr += data.toString() })
-
-        child.on('close', (code) => {
-            if (settled) return
-            settled = true
-            clearTimeout(timeout)
-
-            if (code !== 0 && !stdout) {
-                return reject(new Error(`Bridge process exited with code ${code}: ${stderr}`))
-            }
-
-            try {
-                const result = extractJsonFromOutput(stdout)
-                resolve(result)
-            } catch (parseErr) {
-                reject(new Error(`Failed to parse bridge output: ${stdout} | stderr: ${stderr}`))
-            }
-        })
-
-        child.on('error', (err) => {
-            if (settled) return
-            settled = true
-            clearTimeout(timeout)
-            reject(err)
-        })
-
-        child.stdin.write(JSON.stringify({ messages }))
-        child.stdin.end()
-    })
-}
-
-/**
- * Extract the JSON result line from stdout.
- * litellm prints debug/info noise before our JSON output
- * (e.g. "Give Feedback...", "LiteLLM.Info: ..."), so we scan
- * from the LAST line backwards and return the first one that
- * parses as valid JSON — our script always prints JSON last.
- */
-function extractJsonFromOutput(stdout) {
-    const lines = stdout.split(/\r?\n/).filter(Boolean)
-
-    for (let i = lines.length - 1; i >= 0; i--) {
-        try {
-            return JSON.parse(lines[i])
-        } catch {
-            continue
-        }
-    }
-
-    throw new Error('No valid JSON line found in bridge output')
 }
 
 /**
@@ -180,10 +94,12 @@ function extractJsonFromOutput(stdout) {
  */
 async function checkStackHealth() {
     try {
-        const result = await spawnBridge({
-            messages: [{ role: 'user', content: 'ping' }]
+        const result = await callAgent({
+            agentName: 'HealthCheck',
+            prompt: [{ role: 'user', content: 'ping' }],
+            req: {}
         })
-        return { healthy: result.success === true, bridge: 'python-genai-bridge' }
+        return { healthy: result.simulated === false, bridge: 'python-genai-bridge' }
     } catch (err) {
         return { healthy: false, bridge: 'python-genai-bridge', error: err.message }
     }

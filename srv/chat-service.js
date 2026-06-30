@@ -20,6 +20,7 @@ const { clarificationResponse,
 const { createLogger }       = require('./utils/logger')
 const { INTENTS }            = require('./utils/constants')
 const { SCMError }           = require('./utils/errors')
+const { checkStackHealth } = require('./helpers/remote-call-helper')
 
 const logger = createLogger('SCMChatService')
 
@@ -87,6 +88,16 @@ module.exports = class SCMChatService extends cds.ApplicationService {
             } catch (err) {
                 logger.error('askSupplierRisk failed', err)
                 return errorResponse(err instanceof SCMError ? err : { code: 'UNKNOWN_ERROR', message: err.message })
+            }
+        })
+
+        this.on('checkGenAiHealth', async (req) => {
+            const result = await checkStackHealth()
+            return {
+                healthy: result.healthy,
+                message: result.healthy
+                    ? 'GenAI Hub bridge is responding normally'
+                    : `GenAI Hub bridge unavailable: ${result.error || 'unknown error'}`
             }
         })
 

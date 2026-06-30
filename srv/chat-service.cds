@@ -43,4 +43,10 @@ service SCMChatService @(path: '/scm-chat') {
         message   : String,
         agentHint : String
     ) returns AgentResult;
+
+    @requires: 'SCMViewer'
+    action checkGenAiHealth() returns {
+        healthy : Boolean;
+        message : String;
+    };
 }

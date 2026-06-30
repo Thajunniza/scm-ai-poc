@@ -2,11 +2,11 @@
 call_llm.py
 ────────────
 Bridge script — called by Node.js via child_process.
-Reads messages JSON from stdin, calls litellm (proven SAP provider),
-prints result JSON to stdout.
+Reads messages JSON from an input file, calls litellm (proven SAP provider),
+writes result JSON to an output file.
 
 Usage:
-    echo '{"messages": [...]}' | python call_llm.py
+    python call_llm.py input.json output.json
 """
 
 import sys
@@ -19,12 +19,10 @@ import litellm
 load_dotenv()
 
 MODEL_NAME = os.getenv("LITELLM_MODEL", "sap/gpt-4o")
-
-# Suppress litellm's noisy stdout banners — keep stdout clean for JSON parsing
 litellm.suppress_debug_info = True
 
 
-def call_with_retry(messages, temperature, max_tokens, retries=1):
+def call_with_retry(messages, temperature, max_tokens, retries=2):
     last_error = None
     for attempt in range(retries + 1):
         try:
@@ -37,25 +35,28 @@ def call_with_retry(messages, temperature, max_tokens, retries=1):
             return response
         except Exception as e:
             last_error = e
-            # Retry on transient 503 / service unavailable errors
             is_transient = "503" in str(e) or "unavailable" in str(e).lower()
             if attempt < retries and is_transient:
-                time.sleep(1.5)
+                time.sleep(2 * (attempt + 1))
                 continue
             raise last_error
 
 
 def main():
+    input_path = sys.argv[1]
+    output_path = sys.argv[2]
+
     try:
-        raw_input = sys.stdin.read()
-        payload = json.loads(raw_input)
+        with open(input_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+
         messages = payload["messages"]
 
         response = call_with_retry(
             messages,
             payload.get("temperature", 0.3),
             payload.get("max_tokens", 800),
-            retries=1
+            retries=2
         )
 
         usage = response.get("usage", {})
@@ -75,8 +76,8 @@ def main():
             "error": str(e)
         }
 
-    # Print ONLY the JSON result — this must be the last line of stdout
-    print(json.dumps(result))
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(result, f)
 
 
 if __name__ == "__main__":
