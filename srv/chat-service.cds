@@ -1,24 +1,46 @@
 using { scm } from '../db/schema';
 
 service SCMChatService @(path: '/scm-chat') {
+    type AgentResult {
+        status     : String;
+        reply      : String;
+        agentUsed  : String;
+        confidence : String;
+        sources    : array of String;
+        meta       : {
+            durationMs   : Integer;
+            inputTokens  : Integer;
+            outputTokens : Integer;
+            model        : String;
+            simulated    : Boolean;
+        };
+        timestamp  : String;
+    }
 
-    // ── Read-only views of SCM data ───────────────────────────────
+    @requires: 'SCMViewer'
     @readonly entity Suppliers      as projection on scm.Suppliers;
+
+    @requires: 'SCMViewer'
     @readonly entity Products       as projection on scm.Products;
+
+    @requires: 'SCMViewer'
     @readonly entity PurchaseOrders as projection on scm.PurchaseOrders;
+
+    @requires: 'SCMViewer'
     @readonly entity Shipments      as projection on scm.Shipments;
 
-    // ── Agent actions ─────────────────────────────────────────────
-    action askInventory(message: String)    returns String;
-    action askDelivery(message: String)     returns String;
-    action askSupplierRisk(message: String) returns String;
+    @requires: 'SCMAnalyst'
+    action askInventory(message: String)    returns AgentResult;
 
-    // ── Main chatbot — auto routes to right agent ─────────────────
+    @requires: 'SCMAnalyst'
+    action askDelivery(message: String)     returns AgentResult;
+
+    @requires: 'SCMAnalyst'
+    action askSupplierRisk(message: String) returns AgentResult;
+
+    @requires: 'SCMAnalyst'
     action chat(
         message   : String,
         agentHint : String
-    ) returns {
-        reply     : String;
-        agentUsed : String;
-    };
+    ) returns AgentResult;
 }

@@ -3,32 +3,39 @@
   "version": "1.0.0",
   "description": "SCM AI CAP Service — works with Node.js and Python agentic stacks",
   "scripts": {
-    "start":           "cds-serve",
-    "dev":             "cds watch",
-    "dev:node":        "AGENT_STACK=node cds watch",
-    "dev:python":      "AGENT_STACK=python cds watch",
-    "test":            "jest --runInBand",
-    "test:unit":       "jest test/unit --runInBand",
-    "test:coverage":   "jest --coverage",
-    "test:watch":      "jest --watch"
+    "start": "cds-serve",
+    "dev": "cds watch",
+    "dev:node": "AGENT_STACK=node cds watch",
+    "dev:python": "AGENT_STACK=python cds watch",
+    "test": "jest --runInBand",
+    "test:unit": "jest test/unit --runInBand",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@sap/cds":  "^8.5.1",
-    "express":   "^4.18.0"
+    "@sap/cds": "^8.5.1",
+    "@sap/xssec": "^4.13.0",
+    "express": "^4.18.0",
+    "passport": "^0.7.0"
   },
   "devDependencies": {
     "@sap/cds-dk": "^8.5.1",
-    "sqlite3":     "^5.1.0",
-    "jest":        "^29.0.0"
+    "jest": "^29.0.0",
+    "sqlite3": "^5.1.0"
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch":       ["**/test/**/*.test.js"],
+    "testMatch": [
+      "**/test/**/*.test.js"
+    ],
     "collectCoverageFrom": [
       "srv/**/*.js",
       "!srv/**/*.test.js"
     ],
-    "coverageReporters": ["text", "lcov"],
+    "coverageReporters": [
+      "text",
+      "lcov"
+    ],
     "verbose": true
   },
   "cds": {
@@ -36,6 +43,28 @@
       "db": {
         "kind":        "sqlite",
         "credentials": { "database": ":memory:" }
+      },
+      "auth": {
+        "[development]": {
+          "kind": "mocked",
+          "users": {
+            "admin": {
+              "password": "admin",
+              "roles": ["SCMAdmin", "SCMAnalyst", "SCMViewer"]
+            },
+            "analyst": {
+              "password": "analyst",
+              "roles": ["SCMAnalyst", "SCMViewer"]
+            },
+            "viewer": {
+              "password": "viewer",
+              "roles": ["SCMViewer"]
+            }
+          }
+        },
+        "[production]": {
+          "kind": "xsuaa"
+        }
       }
     }
   }

@@ -1,0 +1,54 @@
+{
+  "xsappname": "scm-ai-poc",
+  "tenant-mode": "dedicated",
+  "description": "SCM AI POC — XSUAA security configuration",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Admin",
+      "description": "Full access — configure agents, manage model rates"
+    },
+    {
+      "name": "$XSAPPNAME.Analyst",
+      "description": "Can query all agents and view reports"
+    },
+    {
+      "name": "$XSAPPNAME.Viewer",
+      "description": "Read-only access to SCM data"
+    }
+  ],
+  "attributes": [],
+  "role-templates": [
+    {
+      "name": "SCMAdmin",
+      "description": "SCM AI Administrator",
+      "scope-references": ["$XSAPPNAME.Admin", "$XSAPPNAME.Analyst", "$XSAPPNAME.Viewer"]
+    },
+    {
+      "name": "SCMAnalyst",
+      "description": "SCM AI Analyst",
+      "scope-references": ["$XSAPPNAME.Analyst", "$XSAPPNAME.Viewer"]
+    },
+    {
+      "name": "SCMViewer",
+      "description": "SCM AI Viewer",
+      "scope-references": ["$XSAPPNAME.Viewer"]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "SCM AI Admin",
+      "description": "Full administrative access to SCM AI POC",
+      "role-template-references": ["$XSAPPNAME.SCMAdmin"]
+    },
+    {
+      "name": "SCM AI Analyst",
+      "description": "Can query all SCM agents",
+      "role-template-references": ["$XSAPPNAME.SCMAnalyst"]
+    },
+    {
+      "name": "SCM AI Viewer",
+      "description": "Read-only access",
+      "role-template-references": ["$XSAPPNAME.SCMViewer"]
+    }
+  ]
+}
